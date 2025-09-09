@@ -4,7 +4,8 @@ import React, { createContext, useEffect, useState } from "react";
 export const userDataContext = createContext();
 
 const UserContext = ({ children }) => {
-  const serverUrl = "http://localhost:8080";
+  // const serverUrl = "http://localhost:8080";
+  const serverUrl = "https://myaiassistant-backend.onrender.com";
   const [userData, setUserData] = useState(null);
 
   // Conversation history from MySQL
