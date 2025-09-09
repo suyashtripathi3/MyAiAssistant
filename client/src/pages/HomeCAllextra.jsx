@@ -14,7 +14,7 @@ const Home = () => {
     serverUrl,
     setUserData,
     getGeminiResponse,
-    conversationHistory: ctxHistory = [], // in case context provides it
+    conversationHistory: ctxHistory = [],
     setConversationHistory,
   } = useContext(userDataContext);
 
@@ -26,23 +26,20 @@ const Home = () => {
   const [aiText, setAiText] = useState("");
   const [ham, setHam] = useState(false);
 
-  // Local conversation history (Q/A)
   const [history, setHistory] = useState(() => {
-    // try to seed from context or userData.history if present
     const seed = ctxHistory?.length
       ? ctxHistory
       : userData?.history?.map((q) => ({ question: q, answer: "" })) || [];
     return Array.isArray(seed) ? seed : [];
   });
 
-  // Fallback “open link” bar if popup blocked
-  const [pendingOpen, setPendingOpen] = useState(null); // { url, label }
+  const [pendingOpen, setPendingOpen] = useState(null);
 
   // ---------- Speech & Recognition Refs ----------
   const isSpeakingRef = useRef(false);
   const recognitionRef = useRef(null);
   const isRecognizingRef = useRef(false);
-  const isActiveRef = useRef(false); // wake-word activated
+  const isActiveRef = useRef(false);
 
   const synth = window.speechSynthesis;
 
@@ -56,7 +53,6 @@ const Home = () => {
       console.log(err);
     } finally {
       setUserData(null);
-      // setConversationHistory([]); // ✅ logout ke time clear kar de
       navigate("/signin");
     }
   };
@@ -78,12 +74,10 @@ const Home = () => {
     }
   };
 
-  // Load voices reliably (Chrome sometimes loads async)
   const pickHindiVoice = () => {
     const voices = synth.getVoices?.() || [];
     const exactHi = voices.find((v) => v.lang === "hi-IN");
     if (exactHi) return exactHi;
-    // fallbacks: try any Indian variant or a neutral voice
     return (
       voices.find((v) => /-IN$/i.test(v.lang)) ||
       voices.find((v) => /en-GB|en-IN|en-US/i.test(v.lang)) ||
@@ -93,18 +87,15 @@ const Home = () => {
 
   const speak = (text) => {
     if (!text) return;
-    // Cancel any queued speech
     synth.cancel();
 
     const utter = new SpeechSynthesisUtterance(text);
-    // Prefer Hindi; content can still be English—voice handles it fairly well
     utter.lang = "hi-IN";
     const v = pickHindiVoice();
     if (v) utter.voice = v;
 
     utter.onstart = () => {
       isSpeakingRef.current = true;
-      // stop recognition while speaking
       try {
         recognitionRef.current?.stop();
       } catch {}
@@ -113,14 +104,12 @@ const Home = () => {
     utter.onend = () => {
       isSpeakingRef.current = false;
       setAiText("");
-      // restart recognition soon after speaking
       setTimeout(() => startRecognition(), 350);
     };
 
     synth.speak(utter);
   };
 
-  // Try to open a URL; if blocked, show a button the user can click
   const tryOpenOrDefer = (url, label = "Open Link") => {
     let win = null;
     try {
@@ -131,7 +120,6 @@ const Home = () => {
     if (!win || win.closed || typeof win.closed === "undefined") {
       console.warn("⚠️ Pop-up blocked. Showing fallback button.");
       setPendingOpen({ url, label });
-      // Tell user via TTS (brief)
       speak(
         "आपके ब्राउज़र ने नई टैब ब्लॉक कर दी है। नीचे दिख रहे बटन पर क्लिक करके लिंक खोलें।"
       );
@@ -140,19 +128,17 @@ const Home = () => {
     return true;
   };
 
-  // Centralized command handler
+  // ---------- Centralized command handler ----------
   const handleCommand = (data, originalQueryText) => {
     if (!data) return;
 
     const { type, userInput, response } = data;
 
-    // Update UI speech bubble
     if (response) {
       setAiText(response);
       speak(response);
     }
 
-    // Append to history (Q and A both)
     setHistory((prev) => [
       ...prev,
       {
@@ -162,30 +148,26 @@ const Home = () => {
       },
     ]);
 
-    // After speaking is queued, attempt opening links immediately;
-    // if blocked, we’ll show UI button (pendingOpen)
     const encode = (q) => encodeURIComponent(q || "");
 
+    // ---------- External action handling ----------
     switch (type) {
-      case "google_search":
-        tryOpenOrDefer(
-          `https://www.google.com/search?q=${encode(userInput)}`,
-          "Open Google Search"
-        );
+      case "youtube_open":
+        tryOpenOrDefer("https://www.youtube.com", "Open YouTube");
         break;
 
       case "youtube_search":
       case "youtube_play":
         tryOpenOrDefer(
           `https://www.youtube.com/results?search_query=${encode(userInput)}`,
-          "Open YouTube"
+          "Open YouTube Search"
         );
         break;
 
-      case "calculator_open":
+      case "google_search":
         tryOpenOrDefer(
-          "https://www.google.com/search?q=calculator",
-          "Open Calculator"
+          `https://www.google.com/search?q=${encode(userInput)}`,
+          "Open Google Search"
         );
         break;
 
@@ -204,8 +186,37 @@ const Home = () => {
         );
         break;
 
+      case "calculator_open":
+        tryOpenOrDefer(
+          "https://www.google.com/search?q=calculator",
+          "Open Calculator"
+        );
+        break;
+
+      // ---------- New mobile commands ----------
+      case "make_call":
+        tryOpenOrDefer(`tel:${userInput}`, `Call ${userInput}`);
+        break;
+
+      case "whatsapp_message":
+        // userInput should be number in international format without '+' (e.g., 919876543210)
+        tryOpenOrDefer(`https://wa.me/${userInput}`, `WhatsApp ${userInput}`);
+        break;
+
+      case "open_app":
+        speak(`Opening ${userInput} app on your device`);
+        // real app opening is limited to PWAs or links, no universal way from browser
+        break;
+
+      case "open_website":
+        tryOpenOrDefer(
+          userInput.startsWith("http") ? userInput : `https://${userInput}`,
+          `Open ${userInput}`
+        );
+        break;
+
       default:
-        // No external action, only TTS/answer
+        console.log("👉 No external action, only response shown.");
         break;
     }
   };
@@ -221,7 +232,7 @@ const Home = () => {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.lang = "en-IN"; // works reasonably for Hinglish
+    recognition.lang = "en-IN";
     recognition.interimResults = false;
     recognitionRef.current = recognition;
 
@@ -239,7 +250,6 @@ const Home = () => {
       isRecognizingRef.current = false;
       setListening(false);
       console.log("🎙️ onend");
-      // auto-restart if not speaking
       if (!isSpeakingRef.current) {
         setTimeout(() => startRecognition(), 700);
       }
@@ -267,7 +277,6 @@ const Home = () => {
       const lower = transcript.toLowerCase();
       const assistantName = (userData?.assistantName || "Jarvis").toLowerCase();
 
-      // Wake word — Activate
       if (!isActiveRef.current && lower.includes(assistantName)) {
         isActiveRef.current = true;
         speak(
@@ -276,7 +285,6 @@ const Home = () => {
         return;
       }
 
-      // Deactivate
       if (
         isActiveRef.current &&
         (lower.includes(`deactivate ${assistantName}`) ||
@@ -295,9 +303,7 @@ const Home = () => {
 
       if (!isActiveRef.current) return;
 
-      // Active → query LLM
       try {
-        // Pause recognition while fetching to avoid overlapping results
         try {
           recognition.stop();
           isRecognizingRef.current = false;
@@ -310,7 +316,6 @@ const Home = () => {
           handleCommand(data, transcript);
           setUserText("");
         } else {
-          // No actionable response → still store the question
           setHistory((prev) => [
             ...prev,
             { question: transcript, answer: "", timestamp: Date.now() },
@@ -320,20 +325,16 @@ const Home = () => {
         console.error("Gemini call failed:", err);
         speak("माफ़ कीजिए, कोई समस्या आ गई। कृपया दोबारा बोलें।");
       } finally {
-        // Ensure recognition resumes
         setTimeout(() => startRecognition(), 600);
       }
     };
 
-    // Voices may load later — hook once
     if (synth && typeof synth.onvoiceschanged !== "undefined") {
       synth.onvoiceschanged = () => {
-        // just touching to warm up voices list
         pickHindiVoice();
       };
     }
 
-    // Initial greeting + start
     setTimeout(() => {
       speak(
         `Hello ${userData?.name || "User"}, say ${
@@ -352,10 +353,8 @@ const Home = () => {
       setListening(false);
       isRecognizingRef.current = false;
       isSpeakingRef.current = false;
-      // remove voice listener
       if (synth) synth.onvoiceschanged = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------- Render ----------
@@ -467,7 +466,7 @@ const Home = () => {
         {userText ? userText : aiText ? aiText : null}
       </h1>
 
-      {/* Desktop conversation box (optional) */}
+      {/* Desktop conversation box */}
       <div className="hidden lg:block w-full max-w-[700px] mt-4 p-4 bg-[#111133] rounded-xl overflow-y-auto max-h-[240px]">
         <h2 className="text-white font-semibold text-[18px] text-center mb-2">
           Conversation History
@@ -487,7 +486,7 @@ const Home = () => {
         ))}
       </div>
 
-      {/* Fallback open link bar when popup blocked */}
+      {/* Fallback open link bar */}
       {pendingOpen && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white text-black rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50">
           <span className="text-sm">
@@ -517,4 +516,3 @@ const Home = () => {
 };
 
 export default Home;
-// 08-09-25
