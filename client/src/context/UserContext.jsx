@@ -3,9 +3,9 @@ import React, { createContext, useEffect, useState } from "react";
 
 export const userDataContext = createContext();
 
-const userContext = ({ children }) => {
-  const serverUrl = "http://localhost:8080";
-  // const serverUrl = "https://my-ai-assistant-6yme.vercel.app/";
+const UserContext = ({ children }) => {
+  // const serverUrl = "http://localhost:8080";
+  const serverUrl = "https://my-ai-assistant-6yme.vercel.app/";
   const [userData, setUserData] = useState(null);
 
   // Conversation history from MySQL
@@ -136,4 +136,4 @@ const userContext = ({ children }) => {
   );
 };
 
-export default userContext;
+export default UserContext;
