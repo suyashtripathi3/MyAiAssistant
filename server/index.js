@@ -12,7 +12,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    // origin: "http://localhost:5173",
+    origin: "my-ai-assistant-omega.vercel.app",
     credentials: true,
   })
 );
