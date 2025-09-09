@@ -12,8 +12,8 @@ const app = express();
 
 app.use(
   cors({
-    // origin: "http://localhost:5173",
-    origin: "https://ai-assistant-kvru.onrender.com",
+    origin: "http://localhost:5173",
+    // origin: "https://ai-assistant-kvru.onrender.com",
     credentials: true,
   })
 );
