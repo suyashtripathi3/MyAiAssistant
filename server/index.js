@@ -13,6 +13,7 @@ const app = express();
 app.use(
   cors({
     // origin: "http://localhost:5173",
+    // origin: "https://ai-assistant-smoky-kappa.vercel.app",
     origin: "https://ai-assistant-smoky-kappa.vercel.app",
     credentials: true,
   })
