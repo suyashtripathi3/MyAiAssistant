@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import backgroundImage from "../assets/authBg.png"; // Ensure you have an image in this path
 import { IoIosEye, IoIosEyeOff } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
-import { userDataContext } from "../context/userContext";
+import { userDataContext } from "../context/UserContext";
 import axios from "axios";
 
 const SignUp = () => {
