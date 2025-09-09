@@ -5,7 +5,7 @@ export const userDataContext = createContext();
 
 const UserContext = ({ children }) => {
   // const serverUrl = "http://localhost:8080";
-  const serverUrl = "https://myaiassistant-backend.onrender.com";
+  const serverUrl = "ai-assistant-backend-rosy.vercel.app";
   const [userData, setUserData] = useState(null);
 
   // Conversation history from MySQL
