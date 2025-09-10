@@ -324,7 +324,7 @@ const Home = () => {
   // ---------- Render ----------
   return (
     <>
-      <div className="w-full min-h-screen bg-gradient-to-t from-black to-[#02023d] flex justify-center items-center flex-col gap-[15px] relative p-4 overflow-x-hidden">
+      <div className="w-full min-h-screen bg-gradient-to-t from-black to-[#02023d] flex justify-center items-center flex-col gap-[15px] relative p-4 overflow-x-hidden scrollbar-glass">
         {/* Hamburger menu */}
         <CgMenuRight
           className="lg:hidden text-white absolute top-[20px] right-[20px] w-[28px] h-[28px] cursor-pointer"
@@ -342,20 +342,20 @@ const Home = () => {
             />
             <div className="flex flex-col gap-3 p-4 ">
               <button
-                className="min-w-[120px] h-[48px] font-semibold bg-white rounded-full text-black text-[16px]"
+                className="min-w-[120px] h-[48px] font-semibold bg-white rounded-full text-black text-[16px] cursor-pointer"
                 onClick={handleLogOut}
               >
                 Log out
               </button>
               <button
-                className="min-w-[180px] h-[48px] font-semibold bg-white rounded-full text-black text-[16px] px-5"
+                className="min-w-[180px] h-[48px] font-semibold bg-white rounded-full text-black text-[16px] px-5 cursor-pointer"
                 onClick={() => navigate("/customize")}
               >
                 Customize Assistant
               </button>
               {/* ✅ Clear History button (Mobile menu) */}
               <button
-                className="min-w-[160px] h-[48px] font-semibold bg-red-500 rounded-full text-white text-[16px] px-5"
+                className="min-w-[160px] h-[48px] font-semibold bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
                 onClick={() => {
                   if (window.confirm("Do you really want to clear history?")) {
                     clearHistory(userData?._id);
@@ -371,7 +371,8 @@ const Home = () => {
               History
             </h2>
 
-            <div className="w-full flex-1 overflow-auto pr-1">
+            {/* Mobile History with scrollbar */}
+            <div className="w-full flex-1 overflow-auto pr-1 scrollbar-glass">
               {history.length === 0 && (
                 <p className="text-gray-300">No conversation yet.</p>
               )}
@@ -393,20 +394,20 @@ const Home = () => {
 
         {/* Desktop actions */}
         <button
-          className="min-w-[120px] h-[48px] font-semibold hidden lg:block absolute top-[20px] right-[20px] bg-white rounded-full text-black text-[16px]"
+          className="min-w-[120px] h-[48px] font-semibold hidden lg:block absolute top-[20px] right-[20px] bg-white rounded-full text-black text-[16px] cursor-pointer"
           onClick={handleLogOut}
         >
           Log out
         </button>
         <button
-          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[80px] right-[20px] bg-white rounded-full text-black text-[16px] px-5"
+          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[80px] right-[20px] bg-white rounded-full text-black text-[16px] px-5 cursor-pointer"
           onClick={() => navigate("/customize")}
         >
           Customize Assistant
         </button>
         {/* ✅ Clear History button (Desktop) */}
         <button
-          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[140px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5"
+          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[140px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
           onClick={() => {
             if (window.confirm("Do you really want to clear history?")) {
               clearHistory(userData?._id);
@@ -459,8 +460,8 @@ const Home = () => {
           {userText ? userText : aiText ? aiText : null}
         </h1>
 
-        {/* Desktop history */}
-        <div className="hidden lg:block w-full max-w-[700px] mt-4 p-4 bg-[#111133] rounded-xl overflow-y-auto max-h-[240px]">
+        {/* Desktop history with scrollbar */}
+        <div className="hidden lg:block w-full max-w-[700px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[240px] scrollbar-glass">
           <h2 className="text-white font-semibold text-[18px] text-center mb-2">
             Conversation History
           </h2>
@@ -487,7 +488,7 @@ const Home = () => {
               <span className="font-semibold">{pendingOpen.label}</span>
             </span>
             <button
-              className="bg-black text-white px-3 py-1 rounded-full text-sm"
+              className="bg-black text-white px-3 py-1 rounded-full text-sm "
               onClick={() => {
                 window.open(pendingOpen.url, "_blank");
                 setPendingOpen(null);

@@ -1,1 +1,70 @@
 @import "tailwindcss";
+
+
+@import "tailwindcss";
+
+@layer utilities {
+  /* Neon Glass Scrollbar (Global + Boxes) */
+  .scrollbar-glass::-webkit-scrollbar {
+    width: 10px;
+    height: 8px;
+  }
+
+  .scrollbar-glass::-webkit-scrollbar-track {
+    background: rgba(20, 20, 40, 0.4);
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+  }
+
+  .scrollbar-glass::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #00f5ff, #8a2be2);
+    border-radius: 12px;
+    border: 2px solid rgba(15, 15, 35, 0.8);
+    box-shadow: 0px 0px 10px rgba(0, 245, 255, 0.6),
+      0px 0px 15px rgba(138, 43, 226, 0.6);
+    transition: all 0.3s ease-in-out;
+  }
+
+  .scrollbar-glass::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #8a2be2, #00f5ff);
+    box-shadow: 0px 0px 15px rgba(0, 245, 255, 0.9),
+      0px 0px 20px rgba(138, 43, 226, 0.9);
+  }
+}
+
+/* 🔹 Hide default cursor */
+* {
+  cursor: none !important;
+}
+
+/* 🔹 Main glowing dot */
+.ai-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #00f5ff, #8a2be2);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.8), 0 0 20px rgba(138, 43, 226, 0.8);
+  transition: transform 0.08s ease-out;
+}
+
+/* 🔹 Outer ring */
+.ai-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(0, 245, 255, 0.6);
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9998;
+  transition: width 0.2s ease, height 0.2s ease, border 0.2s ease;
+}
+

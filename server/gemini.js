@@ -23,7 +23,9 @@ Always respond **strictly in JSON** with this structure:
 }
 
 📌 Type meanings:
-- "general": factual/informational question. Example: "Who is Elon Musk?"
+- "general": factual/informational question. Example: "Who is Elon Musk? and Detect user input language (Hindi / English / Hinglish).
+Reply in the same language with a natural human-like tone and "mera note save kar" → DB me save, "mera reminder set kar" → cron job ya scheduler me set.
+"
 - "google_search": search on Google. Example: "Search AI news on Google"
 - "youtube_search": search videos on YouTube. Example: "Find cute cat videos on YouTube"
 - "youtube_play": directly play a video/song. Example: "Play Believer by Imagine Dragons" → userInput: "Believer by Imagine Dragons"
