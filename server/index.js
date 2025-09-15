@@ -14,7 +14,6 @@ const app = express();
 app.use(
   cors({
     // origin: "http://localhost:5173",
-    // origin: "https://myaiassistant-dmr5.onrender.com",
     origin: "https://my-ai-assistant-khaki.vercel.app",
     credentials: true,
   })

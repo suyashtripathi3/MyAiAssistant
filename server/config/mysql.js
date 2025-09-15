@@ -19,15 +19,16 @@ import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.MYSQL_PUBLIC_URL, {
-  dialect: "mysql",
-  logging: false,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false, // Railway/PlanetScale ke liye SSL required
-    },
-  },
-});
+const sequelize = new Sequelize(
+  process.env.MYSQL_DATABASE,   // Database Name
+  process.env.MYSQL_USER,       // Username
+  process.env.MYSQL_PASSWORD,   // Password
+  {
+    host: process.env.MYSQL_HOST, // sql213.infinityfree.com
+    port: process.env.MYSQL_PORT, // 3306
+    dialect: "mysql",
+    logging: false,
+  }
+);
 
 export default sequelize;
