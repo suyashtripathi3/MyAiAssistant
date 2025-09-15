@@ -43,9 +43,11 @@ const UserContext = ({ children }) => {
     }
   };
 
-  // Get AI response and save conversation
-  // Get AI response and save conversation
+  // Get AI response and (conditionally) save conversation
   const getGeminiResponse = async (command, userId = null) => {
+    // Language detection
+    const isHindi = /[^\x00-\x7F]/.test(command); // simple check
+    const lang = isHindi ? "hi" : "en";
     try {
       const res = await axios.post(
         `${serverUrl}/api/user/asktoassistant`,
@@ -54,25 +56,24 @@ const UserContext = ({ children }) => {
       );
 
       const aiResponse = res.data;
-
-      // Save conversation in MySQL
       const uid = userId || userData?._id;
-      if (uid && aiResponse?.reply) {
+
+      // ✅ Weather_show case → save mat karo DB me
+      if (uid && aiResponse?.reply && aiResponse?.type !== "weather_show") {
         const savedConversation = {
           userId: uid,
           question: command,
           answer: aiResponse.reply,
         };
 
-        // Save to backend
+        // Save to backend (MySQL)
         await axios.post(
           `${serverUrl}/api/conversations/save`,
           savedConversation
         );
 
-        // Update context state (without duplication)
+        // Update context state (avoid duplication)
         setConversationHistory((prev) => {
-          // Agar last question same ho to dubara mat add karo
           if (
             prev.length > 0 &&
             prev[prev.length - 1].question === command &&

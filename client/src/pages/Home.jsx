@@ -8,6 +8,7 @@ import axios from "axios";
 import { CgMenuRight } from "react-icons/cg";
 import { RxCross1 } from "react-icons/rx";
 import Footer from "./Footer";
+import ConversationHistory from "../components/ConversationHistory.jsx";
 
 const Home = () => {
   const {
@@ -160,10 +161,37 @@ const Home = () => {
         tryOpenOrDefer("https://www.facebook.com/", "Open Facebook");
         break;
       case "weather_show":
-        tryOpenOrDefer(
-          "https://www.google.com/search?q=weather",
-          "Open Weather"
-        );
+        (async () => {
+          try {
+            const city = userInput;
+
+            // Language detection: Hindi if user asks in Hindi
+            const isHindi = /[^\x00-\x7F]/.test(originalQueryText); // <--- use originalQueryText
+            const lang = isHindi ? "hi" : "en";
+
+            const res = await axios.get(
+              `${serverUrl}/api/weather?city=${encodeURIComponent(
+                city
+              )}&lang=${lang}`
+            );
+
+            const weather = res.data;
+
+            if (weather?.response) {
+              setAiText(weather.response); // UI par dikhana
+              speak(weather.response); // AI voice bolna
+            }
+          } catch (err) {
+            console.error("Weather fetch error:", err);
+            const fallback = /[^\x00-\x7F]/.test(originalQueryText)
+              ? "माफ़ कीजिए, मौसम जानकारी नहीं ला पाए।"
+              : "Sorry, I could not fetch the weather.";
+            setAiText(fallback);
+            speak(fallback);
+          }
+        })();
+        break;
+
         break;
       case "calculator_open":
         tryOpenOrDefer(
@@ -236,6 +264,40 @@ const Home = () => {
       }
     };
 
+    // text me Hindi Unicode character check karke language detect kare
+    const detectLanguage = (text) => {
+      const hindiPattern = /[\u0900-\u097F]/; // Devanagari range
+      return hindiPattern.test(text) ? "hi" : "en";
+    };
+
+    const handleWeather = async (transcript) => {
+      const cityMatch = transcript.match(/in ([a-zA-Z\u0900-\u097F\s]+)/i);
+      const city = cityMatch ? cityMatch[1].trim() : "Delhi";
+      const lang = detectLanguage(transcript);
+
+      try {
+        const res = await axios.get(
+          `${serverUrl}/api/weather?city=${encodeURIComponent(
+            city
+          )}&lang=${lang}`
+        );
+        const weather = res.data;
+
+        if (weather?.response) {
+          setAiText(weather.response); // UI par dikhaye
+          speak(weather.response); // voice bolaye
+        }
+      } catch (err) {
+        console.error("Weather fetch error:", err);
+        const fallback =
+          lang === "hi"
+            ? "माफ़ कीजिए, मौसम नहीं fetch कर पाया।"
+            : "Sorry, I could not fetch the weather.";
+        setAiText(fallback);
+        speak(fallback);
+      }
+    };
+
     recognition.onresult = async (e) => {
       const result = e.results[e.results.length - 1][0];
       const transcript = (result?.transcript || "").trim();
@@ -248,6 +310,7 @@ const Home = () => {
       const lower = transcript.toLowerCase();
       const assistantName = (userData?.assistantName || "Jarvis").toLowerCase();
 
+      // activate assistant
       if (!isActiveRef.current && lower.includes(assistantName)) {
         isActiveRef.current = true;
         speak(
@@ -256,6 +319,7 @@ const Home = () => {
         return;
       }
 
+      // deactivate assistant
       if (
         isActiveRef.current &&
         (lower.includes(`deactivate ${assistantName}`) ||
@@ -274,6 +338,17 @@ const Home = () => {
 
       if (!isActiveRef.current) return;
 
+      // ✅ Weather command alag handle
+      if (lower.includes("weather") || lower.includes("मौसम")) {
+        recognition.stop();
+        isRecognizingRef.current = false;
+        setListening(false);
+
+        await handleWeather(transcript); // ye function above
+        return; // normal AI response ko block kar
+      }
+
+      // normal AI conversation
       try {
         recognition.stop();
         isRecognizingRef.current = false;
@@ -372,22 +447,11 @@ const Home = () => {
             </h2>
 
             {/* Mobile History with scrollbar */}
-            <div className="w-full flex-1 overflow-auto pr-1 scrollbar-glass">
-              {history.length === 0 && (
-                <p className="text-gray-300">No conversation yet.</p>
-              )}
-              {history.map((item, idx) => (
-                <div key={idx} className="mb-3">
-                  <p className="text-blue-400 font-semibold">
-                    Q: {item.question}
-                  </p>
-                  {item.answer ? (
-                    <p className="text-white">A: {item.answer}</p>
-                  ) : (
-                    <p className="text-gray-300 italic">A: —</p>
-                  )}
-                </div>
-              ))}
+            <div className="lg:hidden w-full mt-4 p-3 bg-[#111133]/80 backdrop-blur-md rounded-xl max-h-[400px] overflow-y-auto scrollbar-glass">
+              <h2 className="text-white font-semibold text-[16px] text-center mb-2">
+                Conversation History
+              </h2>
+              <ConversationHistory history={history} variant="mobile" />
             </div>
           </div>
         </div>
@@ -461,23 +525,11 @@ const Home = () => {
         </h1>
 
         {/* Desktop history with scrollbar */}
-        <div className="hidden lg:block w-full max-w-[700px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[240px] scrollbar-glass">
+        <div className="hidden lg:block w-full max-w-[850px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[300px] scrollbar-glass">
           <h2 className="text-white font-semibold text-[18px] text-center mb-2">
             Conversation History
           </h2>
-          {history.length === 0 && (
-            <p className="text-gray-300 text-center">No conversation yet.</p>
-          )}
-          {history.map((item, idx) => (
-            <div key={idx} className="mb-2">
-              <p className="text-blue-400 font-semibold">Q: {item.question}</p>
-              {item.answer ? (
-                <p className="text-white">A: {item.answer}</p>
-              ) : (
-                <p className="text-gray-300 italic">A: —</p>
-              )}
-            </div>
-          ))}
+          <ConversationHistory history={history} variant="desktop" />
         </div>
 
         {/* Popup blocked bar */}

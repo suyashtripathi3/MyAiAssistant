@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import userRouter from "./routes/user.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
+import weatherRoutes from "./routes/weather.route.js";
 
 const app = express();
 
@@ -27,8 +28,10 @@ app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/conversations", conversationRoutes);
 
+app.use("/api/weather", weatherRoutes);
 
-app.listen(PORT, () => {
-  connectDB();
-  console.log(`Server is running on port ${PORT}`);
-});
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch((err) => console.error("DB connection failed:", err));
