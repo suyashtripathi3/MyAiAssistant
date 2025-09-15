@@ -5,7 +5,7 @@ export const userDataContext = createContext();
 
 const UserContext = ({ children }) => {
   // const serverUrl = "http://localhost:8080";
-  const serverUrl = "https://my-ai-backend-kappa.vercel.app";
+  const serverUrl = "https://my-ai-server-xi.vercel.app";
   const [userData, setUserData] = useState(null);
 
   // Conversation history from MySQL
