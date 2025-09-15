@@ -11,13 +11,12 @@ import weatherRoutes from "./routes/weather.route.js";
 
 const app = express();
 
-app.use(
-  cors({
-    // origin: "http://localhost:5173",
-    origin: "https://my-ai-assistant-khaki.vercel.app",
-    credentials: true,
-  })
-);
+app.use(cors({
+      // origin: "http://localhost:5173",
+  origin: "https://my-ai-assistant-khaki.vercel.app", // ✅ frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 const PORT = process.env.PORT || 8080;
 
