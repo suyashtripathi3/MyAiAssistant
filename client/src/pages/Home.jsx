@@ -160,30 +160,29 @@ const Home = () => {
   };
   const handleMicToggle = async () => {
     if (!micActivated) {
+      // ✅ Mic ON (mute/unmute)
       setMicActivated(true);
 
-      // Start mic stream (user gesture allows)
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log("🎤 Mic activated");
       } catch (err) {
         console.error("Mic permission denied", err);
         setMicActivated(false);
         return;
       }
 
-      // Start recognition
-      startRecognition();
-
-      // Optional: initial greeting
-      speak(
-        `Hello ${userData?.name || "User"}, say ${
-          userData?.assistantName || "Jarvis"
-        } to activate me.`
-      );
+      // Desktop: auto start recognition
+      if (!/Mobi|Android/i.test(navigator.userAgent)) {
+        startRecognition();
+      }
     } else {
+      // ✅ Mic OFF (stop recognition only, AI state unchanged)
       setMicActivated(false);
-      recognitionRef.current?.stop();
-      synth.cancel();
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+      console.log("🎤 Mic turned off");
     }
   };
 
@@ -307,18 +306,17 @@ const Home = () => {
     };
 
     recognition.onend = () => {
-      if (!mounted) return;
       isRecognizingRef.current = false;
       setListening(false);
       console.log("🎙️ onend");
 
-      // Desktop only auto-restart
+      // Auto restart only if mic is ON & desktop
       if (
-        !isSpeakingRef.current &&
         micActivated &&
+        !isSpeakingRef.current &&
         !/Mobi|Android/i.test(navigator.userAgent)
       ) {
-        setTimeout(() => startRecognition(), 700);
+        setTimeout(() => startRecognition(), 600);
       }
     };
 
@@ -523,7 +521,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-
         {/* Desktop actions */}
         <button
           className="min-w-[120px] h-[48px] font-semibold hidden lg:block absolute top-[20px] right-[20px] bg-white rounded-full text-black text-[16px] cursor-pointer"
@@ -548,7 +545,6 @@ const Home = () => {
         >
           Clear History
         </button>
-
         {/* Assistant display */}
         <div className="w-[300px] h-[360px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg">
           <img src={userData?.assistantImage} alt="" className="h-full" />
@@ -556,7 +552,6 @@ const Home = () => {
         <h1 className="text-white text-[18px] font-semibold">
           I'm <span className="text-blue-400">{userData?.assistantName}</span>
         </h1>
-
         {/* Status pills */}
         <div className="flex gap-2 mb-1">
           <span
@@ -578,7 +573,6 @@ const Home = () => {
             {isActiveRef.current ? "Active" : "Say name to activate"}
           </span>
         </div>
-
         {/* Avatars */}
         {!aiText && (
           <img src={userImg} alt="" className="w-[140px] mix-blend-lighten" />
@@ -586,12 +580,10 @@ const Home = () => {
         {aiText && (
           <img src={aiImg} alt="" className="w-[140px] mix-blend-lighten" />
         )}
-
         {/* Bubble text */}
         <h1 className="text-white text-[18px] font-semibold text-center px-4">
           {userText ? userText : aiText ? aiText : null}
         </h1>
-
         {/* Desktop history with scrollbar */}
         <div className="hidden lg:block w-full max-w-[850px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[300px] scrollbar-glass">
           <h2 className="text-white font-semibold text-[18px] text-center mb-2">
@@ -599,8 +591,7 @@ const Home = () => {
           </h2>
           <ConversationHistory history={history} variant="desktop" />
         </div>
-
-        {/* ---------- Floating Mic Button ---------- */}
+        {/* // ---------- Floating Mic Button (Bottom Right) ---------- */}
         <div className="fixed bottom-5 right-5 z-50 flex flex-col items-center gap-1">
           {/* Mic status indicator */}
           <span
@@ -612,15 +603,16 @@ const Home = () => {
 
           {/* Mic toggle button */}
           <button
-            className={`fixed bottom-4 right-4 w-12 h-12 rounded-full text-white flex justify-center items-center z-50 ${
-              micActivated ? "bg-red-500" : "bg-green-500"
+            className={`w-12 h-12 flex justify-center items-center rounded-full shadow-lg text-xl ${
+              micActivated
+                ? "bg-green-600 text-white"
+                : "bg-gray-700 text-white"
             }`}
             onClick={handleMicToggle}
           >
-            {micActivated ? "🔴" : "🎤"}
+            {micActivated ? "🎤" : "🎙️"}
           </button>
         </div>
-
         {/* Popup blocked bar */}
         {pendingOpen && (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white text-black rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50">
