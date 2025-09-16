@@ -43,6 +43,7 @@ const Home = () => {
   const isRecognizingRef = useRef(false);
   const isActiveRef = useRef(false);
   const micMutedRef = useRef(true); // track mic status reliably
+  const isMobileRef = useRef(false);
 
   const synth = window.speechSynthesis;
 
@@ -67,6 +68,12 @@ const Home = () => {
       return !prev;
     });
   };
+
+  // FOr mobiles
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    isMobileRef.current = /Mobi|Android/i.test(ua);
+  }, []);
 
   // Effect to handle mic state
   useEffect(() => {
@@ -144,12 +151,21 @@ const Home = () => {
         isRecognizingRef.current = false;
       }
       setListening(false);
+
+      // ✅ Mobile fix: ignore auto restart while AI speaking
+      if (isMobileRef.current) {
+        micMutedRef.current = true; // temporary pause recognition on mobile
+      }
     };
 
     utter.onend = () => {
       console.log("✅ AI finished speaking");
       isSpeakingRef.current = false;
       setAiText("");
+
+      if (isMobileRef.current) {
+        micMutedRef.current = false; // restore mic state
+      }
 
       if (!micMutedRef.current) {
         // ✅ ref
