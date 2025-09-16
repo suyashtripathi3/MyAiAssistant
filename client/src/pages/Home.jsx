@@ -59,8 +59,8 @@ const Home = () => {
 
   // ---------- Helpers ----------
   const startRecognition = () => {
-    if (!recognitionRef.current) return;
-    if (!isSpeakingRef.current && !isRecognizingRef.current) {
+    if (!recognitionRef.current || !micActivated) return; // mic ON check
+    if (!isRecognizingRef.current && !isSpeakingRef.current) {
       try {
         recognitionRef.current.start();
         isRecognizingRef.current = true;
@@ -160,24 +160,19 @@ const Home = () => {
   };
   const handleMicToggle = async () => {
     if (!micActivated) {
-      // ✅ Mic ON (mute/unmute)
       setMicActivated(true);
-
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
         console.log("🎤 Mic activated");
+
+        // ✅ Start recognition immediately on both desktop & mobile
+        startRecognition();
       } catch (err) {
         console.error("Mic permission denied", err);
         setMicActivated(false);
         return;
       }
-
-      // Desktop: auto start recognition
-      if (!/Mobi|Android/i.test(navigator.userAgent)) {
-        startRecognition();
-      }
     } else {
-      // ✅ Mic OFF (stop recognition only, AI state unchanged)
       setMicActivated(false);
       try {
         recognitionRef.current?.stop();
@@ -305,18 +300,14 @@ const Home = () => {
       console.log("🎙️ onstart");
     };
 
-    recognition.onend = () => {
+    recognitionRef.current.onend = () => {
       isRecognizingRef.current = false;
       setListening(false);
       console.log("🎙️ onend");
 
-      // Auto restart only if mic is ON & desktop
-      if (
-        micActivated &&
-        !isSpeakingRef.current &&
-        !/Mobi|Android/i.test(navigator.userAgent)
-      ) {
-        setTimeout(() => startRecognition(), 600);
+      // ✅ Restart recognition only if mic is ON, mobile ya desktop fark nahi
+      if (micActivated && !isSpeakingRef.current) {
+        setTimeout(() => startRecognition(), 500);
       }
     };
 
