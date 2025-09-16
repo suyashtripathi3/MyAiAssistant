@@ -160,44 +160,30 @@ const Home = () => {
   };
   const handleMicToggle = async () => {
     if (!micActivated) {
-      // ✅ Mic activate
       setMicActivated(true);
-      isActiveRef.current = false; // assistant initially inactive
 
-      // Start speech
-      speak(
-        `Hello ${userData?.name || "User"}, say ${
-          userData?.assistantName || "Jarvis"
-        } to activate me.`
-      );
-
-      // Start mic stream
+      // Start mic stream (user gesture allows)
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        console.log("🎤 Mic activated", stream);
+        await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (err) {
         console.error("Mic permission denied", err);
         setMicActivated(false);
         return;
       }
 
-      // Start recognition after speech
-      setTimeout(() => {
-        if (micActivated) startRecognition();
-      }, 600);
+      // Start recognition
+      startRecognition();
+
+      // Optional: initial greeting
+      speak(
+        `Hello ${userData?.name || "User"}, say ${
+          userData?.assistantName || "Jarvis"
+        } to activate me.`
+      );
     } else {
       setMicActivated(false);
-
-      // ❌ DO NOT touch isActiveRef.current
-      // isActiveRef.current = false; // remove this line
-
-      try {
-        recognitionRef.current?.stop(); // stop recognition
-      } catch {}
-      synth.cancel(); // stop ongoing speech
-      console.log("🎤 Mic turned off, assistant state unchanged");
+      recognitionRef.current?.stop();
+      synth.cancel();
     }
   };
 
@@ -325,7 +311,13 @@ const Home = () => {
       isRecognizingRef.current = false;
       setListening(false);
       console.log("🎙️ onend");
-      if (!isSpeakingRef.current) {
+
+      // Desktop only auto-restart
+      if (
+        !isSpeakingRef.current &&
+        micActivated &&
+        !/Mobi|Android/i.test(navigator.userAgent)
+      ) {
         setTimeout(() => startRecognition(), 700);
       }
     };
@@ -620,14 +612,12 @@ const Home = () => {
 
           {/* Mic toggle button */}
           <button
-            className={`w-12 h-12 flex justify-center items-center rounded-full shadow-lg text-xl ${
-              micActivated
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-white"
+            className={`fixed bottom-4 right-4 w-12 h-12 rounded-full text-white flex justify-center items-center z-50 ${
+              micActivated ? "bg-red-500" : "bg-green-500"
             }`}
             onClick={handleMicToggle}
           >
-            {micActivated ? "🎤" : "🎙️"}
+            {micActivated ? "🔴" : "🎤"}
           </button>
         </div>
 
