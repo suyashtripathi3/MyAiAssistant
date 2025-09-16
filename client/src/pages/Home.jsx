@@ -96,13 +96,39 @@ const Home = () => {
     }
   }, [micMuted]);
 
+  // ---------- Tab visibility fix ----------
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !micMuted && !isSpeakingRef.current) {
+        console.log("📌 Tab active → restarting recognition");
+        startRecognition();
+      } else if (document.hidden && isRecognizingRef.current) {
+        console.log("📌 Tab inactive → pausing recognition");
+        try {
+          recognitionRef.current?.stop();
+        } catch {}
+        isRecognizingRef.current = false;
+        setListening(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [micMuted]);
+
   // ---------- Helpers ----------
   const startRecognition = () => {
     if (!recognitionRef.current) return;
 
-    if (micMutedRef.current) {
-      // ✅ use ref here
+    if (micMuted) {
       console.log("⛔ Mic is muted, recognition won't start");
+      setListening(false);
+      return;
+    }
+
+    if (document.hidden) {
+      console.log("⛔ Tab not active, won't start recognition");
       setListening(false);
       return;
     }
@@ -142,20 +168,16 @@ const Home = () => {
     utter.onstart = () => {
       console.log("🗣️ AI speaking:", text);
       isSpeakingRef.current = true;
-      // **Important:** Listening should temporarily stop but not go idle if mic is on
-      if (recognitionRef.current && isRecognizingRef.current) {
+
+      // Stop recognition only temporarily
+      if (isRecognizingRef.current) {
         try {
-          recognitionRef.current.stop();
+          recognitionRef.current?.stop();
           console.log("🎙️ Recognition paused due to AI speaking");
         } catch {}
         isRecognizingRef.current = false;
       }
       setListening(false);
-
-      // ✅ Mobile fix: ignore auto restart while AI speaking
-      if (isMobileRef.current) {
-        micMutedRef.current = true; // temporary pause recognition on mobile
-      }
     };
 
     utter.onend = () => {
@@ -163,19 +185,16 @@ const Home = () => {
       isSpeakingRef.current = false;
       setAiText("");
 
-      if (isMobileRef.current) {
-        micMutedRef.current = false; // restore mic state
-      }
-
-      if (!micMutedRef.current) {
-        // ✅ ref
+      // Restart recognition only if mic is unmuted & tab active
+      if (!micMuted && !document.hidden) {
         console.log("🎤 Restarting recognition after AI finished speaking");
         startRecognition();
       } else {
-        console.log("⏹️ Mic is muted, staying Idle");
+        console.log("⏹️ Mic muted or tab inactive → stay Idle");
         setListening(false);
       }
     };
+
     synth.speak(utter);
   };
 
