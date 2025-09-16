@@ -101,14 +101,13 @@ const Home = () => {
       } catch {}
     };
 
+    // speak() function ke utter.onend me
     utter.onend = () => {
       isSpeakingRef.current = false;
       setAiText("");
-      // Desktop only auto start recognition
-      if (!/Mobi|Android/i.test(navigator.userAgent)) {
-        setTimeout(() => startRecognition(), 350);
+      if (micActivated) {
+        setTimeout(() => startRecognition(), 350); // Mobile + Desktop dono
       }
-      // setTimeout(() => startRecognition(), 350);
     };
 
     synth.speak(utter);
@@ -305,7 +304,6 @@ const Home = () => {
       setListening(false);
       console.log("🎙️ onend");
 
-      // ✅ Restart recognition only if mic is ON, mobile ya desktop fark nahi
       if (micActivated && !isSpeakingRef.current) {
         setTimeout(() => startRecognition(), 500);
       }
