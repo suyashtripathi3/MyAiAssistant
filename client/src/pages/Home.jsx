@@ -27,7 +27,6 @@ const Home = () => {
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
   const [ham, setHam] = useState(false);
-  const [micActivated, setMicActivated] = useState(false);
 
   // ✅ Context wali history hi use karenge
   const history = conversationHistory || [];
@@ -59,8 +58,8 @@ const Home = () => {
 
   // ---------- Helpers ----------
   const startRecognition = () => {
-    if (!recognitionRef.current || !micActivated) return; // mic ON check
-    if (!isRecognizingRef.current && !isSpeakingRef.current) {
+    if (!recognitionRef.current) return;
+    if (!isSpeakingRef.current && !isRecognizingRef.current) {
       try {
         recognitionRef.current.start();
         isRecognizingRef.current = true;
@@ -101,13 +100,10 @@ const Home = () => {
       } catch {}
     };
 
-    // speak() function ke utter.onend me
     utter.onend = () => {
       isSpeakingRef.current = false;
       setAiText("");
-      if (micActivated) {
-        setTimeout(() => startRecognition(), 350); // Mobile + Desktop dono
-      }
+      setTimeout(() => startRecognition(), 350);
     };
 
     synth.speak(utter);
@@ -127,57 +123,6 @@ const Home = () => {
       return false;
     }
     return true;
-  };
-
-  // Button handler for mic activation
-  const handleMicActivate = () => {
-    setMicActivated(true);
-
-    // 👇 Pehli baar speech start karo
-    speak(
-      `Hello ${userData?.name || "User"}, say ${
-        userData?.assistantName || "Jarvis"
-      } to activate me.`
-    );
-
-    // 👇 Mic stream start karo
-    startMicStream();
-
-    // 👇 Recognition start karo
-    setTimeout(() => startRecognition(), 600);
-  };
-
-  // Mic stream function
-  const startMicStream = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log("🎤 Mic activated", stream);
-      // Yaha tu Gemini speech recognition ya command parse me use kar sakta hai
-    } catch (err) {
-      console.error("Mic permission denied", err);
-    }
-  };
-  const handleMicToggle = async () => {
-    if (!micActivated) {
-      setMicActivated(true);
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log("🎤 Mic activated");
-
-        // ✅ Start recognition immediately on both desktop & mobile
-        startRecognition();
-      } catch (err) {
-        console.error("Mic permission denied", err);
-        setMicActivated(false);
-        return;
-      }
-    } else {
-      setMicActivated(false);
-      try {
-        recognitionRef.current?.stop();
-      } catch {}
-      console.log("🎤 Mic turned off");
-    }
   };
 
   // ---------- Central Command Handler ----------
@@ -299,13 +244,13 @@ const Home = () => {
       console.log("🎙️ onstart");
     };
 
-    recognitionRef.current.onend = () => {
+    recognition.onend = () => {
+      if (!mounted) return;
       isRecognizingRef.current = false;
       setListening(false);
       console.log("🎙️ onend");
-
-      if (micActivated && !isSpeakingRef.current) {
-        setTimeout(() => startRecognition(), 500);
+      if (!isSpeakingRef.current) {
+        setTimeout(() => startRecognition(), 700);
       }
     };
 
@@ -510,6 +455,7 @@ const Home = () => {
             </div>
           </div>
         </div>
+
         {/* Desktop actions */}
         <button
           className="min-w-[120px] h-[48px] font-semibold hidden lg:block absolute top-[20px] right-[20px] bg-white rounded-full text-black text-[16px] cursor-pointer"
@@ -534,6 +480,7 @@ const Home = () => {
         >
           Clear History
         </button>
+
         {/* Assistant display */}
         <div className="w-[300px] h-[360px] flex justify-center items-center overflow-hidden rounded-4xl shadow-lg">
           <img src={userData?.assistantImage} alt="" className="h-full" />
@@ -541,6 +488,7 @@ const Home = () => {
         <h1 className="text-white text-[18px] font-semibold">
           I'm <span className="text-blue-400">{userData?.assistantName}</span>
         </h1>
+
         {/* Status pills */}
         <div className="flex gap-2 mb-1">
           <span
@@ -562,6 +510,7 @@ const Home = () => {
             {isActiveRef.current ? "Active" : "Say name to activate"}
           </span>
         </div>
+
         {/* Avatars */}
         {!aiText && (
           <img src={userImg} alt="" className="w-[140px] mix-blend-lighten" />
@@ -569,10 +518,12 @@ const Home = () => {
         {aiText && (
           <img src={aiImg} alt="" className="w-[140px] mix-blend-lighten" />
         )}
+
         {/* Bubble text */}
         <h1 className="text-white text-[18px] font-semibold text-center px-4">
           {userText ? userText : aiText ? aiText : null}
         </h1>
+
         {/* Desktop history with scrollbar */}
         <div className="hidden lg:block w-full max-w-[850px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[300px] scrollbar-glass">
           <h2 className="text-white font-semibold text-[18px] text-center mb-2">
@@ -580,28 +531,7 @@ const Home = () => {
           </h2>
           <ConversationHistory history={history} variant="desktop" />
         </div>
-        {/* // ---------- Floating Mic Button (Bottom Right) ---------- */}
-        <div className="fixed bottom-5 right-5 z-50 flex flex-col items-center gap-1">
-          {/* Mic status indicator */}
-          <span
-            className={`w-3 h-3 rounded-full ${
-              micActivated ? "bg-green-500" : "bg-red-500"
-            }`}
-            title={micActivated ? "Mic On" : "Mic Off"}
-          ></span>
 
-          {/* Mic toggle button */}
-          <button
-            className={`w-12 h-12 flex justify-center items-center rounded-full shadow-lg text-xl ${
-              micActivated
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-white"
-            }`}
-            onClick={handleMicToggle}
-          >
-            {micActivated ? "🎤" : "🎙️"}
-          </button>
-        </div>
         {/* Popup blocked bar */}
         {pendingOpen && (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white text-black rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50">
