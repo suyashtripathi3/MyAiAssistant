@@ -42,6 +42,7 @@ const Home = () => {
   const recognitionRef = useRef(null);
   const isRecognizingRef = useRef(false);
   const isActiveRef = useRef(false);
+  const micMutedRef = useRef(true); // track mic status reliably
 
   const synth = window.speechSynthesis;
 
@@ -58,56 +59,68 @@ const Home = () => {
       navigate("/signin");
     }
   };
+  // toggle mic
   const handleMicMuteToggle = () => {
     setMicMuted((prev) => {
-      const newState = !prev;
-
-      if (newState) {
-        // ✅ Mic muted → recognition stop
-        recognitionRef.current?.stop();
-        console.log("🎤 Mic muted → recognition stopped");
-      } else {
-        // ✅ Mic unmuted → recognition start
-        try {
-          recognitionRef.current?.start();
-          console.log("🎤 Mic unmuted → recognition started");
-        } catch (e) {
-          console.error("Restart failed:", e);
-        }
-      }
-
-      return newState;
+      micMutedRef.current = !prev;
+      console.log("🎤 Mic toggle, now muted:", !prev);
+      return !prev;
     });
   };
+
+  // Effect to handle mic state
+  useEffect(() => {
+    console.log("🛠️ micMuted changed:", micMuted);
+    if (!micMuted) {
+      // start listening only if AI is not speaking
+      if (!isSpeakingRef.current) {
+        startRecognition();
+      }
+    } else {
+      // stop recognition immediately
+      if (recognitionRef.current && isRecognizingRef.current) {
+        try {
+          recognitionRef.current.stop();
+          console.log("🎙️ Recognition stopped due to mic mute");
+        } catch {}
+        isRecognizingRef.current = false;
+      }
+      setListening(false);
+    }
+  }, [micMuted]);
 
   // ---------- Helpers ----------
   const startRecognition = () => {
     if (!recognitionRef.current) return;
-    if (micMuted) return; // ✅ agar mute hai → kuch mat karo
 
-    if (!isSpeakingRef.current && !isRecognizingRef.current) {
-      try {
-        recognitionRef.current.start();
-        isRecognizingRef.current = true;
-        setListening(true);
-        console.log("🎤 Recognition started");
-      } catch (error) {
-        if (error?.name !== "InvalidStateError") {
-          console.error("Recognition start error:", error);
-        }
-      }
+    if (micMutedRef.current) {
+      // ✅ use ref here
+      console.log("⛔ Mic is muted, recognition won't start");
+      setListening(false);
+      return;
+    }
+
+    if (isRecognizingRef.current) {
+      console.log("⏸️ Already recognizing");
+      return;
+    }
+
+    try {
+      recognitionRef.current.start();
+      isRecognizingRef.current = true;
+      setListening(true);
+      console.log("🎤 Recognition started");
+    } catch (error) {
+      if (error?.name !== "InvalidStateError") console.error(error);
     }
   };
 
   const pickHindiVoice = () => {
-    const voices = synth.getVoices?.() || [];
-    const exactHi = voices.find((v) => v.lang === "hi-IN");
-    if (exactHi) return exactHi;
-    return (
-      voices.find((v) => /-IN$/i.test(v.lang)) ||
-      voices.find((v) => /en-GB|en-IN|en-US/i.test(v.lang)) ||
-      null
-    );
+    const voices = synth.getVoices() || [];
+    if (!voices.length) return null; // Wait until voices loaded
+
+    const hiVoice = voices.find((v) => v.lang === "hi-IN");
+    return hiVoice || voices[0] || null;
   };
 
   const speak = (text) => {
@@ -120,18 +133,33 @@ const Home = () => {
     if (v) utter.voice = v;
 
     utter.onstart = () => {
+      console.log("🗣️ AI speaking:", text);
       isSpeakingRef.current = true;
-      try {
-        recognitionRef.current?.stop();
-      } catch {}
+      // **Important:** Listening should temporarily stop but not go idle if mic is on
+      if (recognitionRef.current && isRecognizingRef.current) {
+        try {
+          recognitionRef.current.stop();
+          console.log("🎙️ Recognition paused due to AI speaking");
+        } catch {}
+        isRecognizingRef.current = false;
+      }
+      setListening(false);
     };
 
     utter.onend = () => {
+      console.log("✅ AI finished speaking");
       isSpeakingRef.current = false;
       setAiText("");
-      setTimeout(() => startRecognition(), 350);
-    };
 
+      if (!micMutedRef.current) {
+        // ✅ ref
+        console.log("🎤 Restarting recognition after AI finished speaking");
+        startRecognition();
+      } else {
+        console.log("⏹️ Mic is muted, staying Idle");
+        setListening(false);
+      }
+    };
     synth.speak(utter);
   };
 
@@ -271,12 +299,16 @@ const Home = () => {
     };
 
     recognition.onend = () => {
-      if (!mounted) return;
       isRecognizingRef.current = false;
-      setListening(false);
-      console.log("🎙️ onend");
-      if (!isSpeakingRef.current) {
-        setTimeout(() => startRecognition(), 700);
+      if (!micMutedRef.current && !isSpeakingRef.current) {
+        // ✅ ref
+        console.log("🎤 Recognition ended, restarting automatically");
+        setTimeout(() => startRecognition(), 500);
+      } else {
+        console.log(
+          "⏹️ Recognition ended but mic muted or AI speaking, staying Idle"
+        );
+        setListening(false);
       }
     };
 
@@ -334,9 +366,8 @@ const Home = () => {
       setAiText("");
 
       const lower = transcript.toLowerCase();
-      const assistantName = (userData?.assistantName || "Jarvis").toLowerCase();
 
-      // activate assistant
+      const assistantName = (userData?.assistantName || "Jarvis").toLowerCase();
       if (!isActiveRef.current && lower.includes(assistantName)) {
         isActiveRef.current = true;
         speak(
@@ -519,13 +550,16 @@ const Home = () => {
         <div className="flex gap-2 mb-1">
           <span
             className={`px-3 py-1 rounded-full text-xs ${
-              listening
-                ? "bg-green-600/40 text-green-200"
-                : "bg-gray-600/40 text-gray-200"
+              micMuted
+                ? "bg-gray-600/40 text-gray-200" // Idle only if mic muted
+                : listening
+                ? "bg-green-600/40 text-green-200" // Listening
+                : "bg-gray-600/40 text-gray-200" // AI speaking → still Idle shown as gray
             }`}
           >
-            {listening ? "Listening…" : "Idle"}
+            {micMuted ? "Idle" : listening ? "Listening…" : "Idle"}
           </span>
+
           <span
             className={`px-3 py-1 rounded-full text-xs ${
               isActiveRef.current
