@@ -9,6 +9,7 @@ import { CgMenuRight } from "react-icons/cg";
 import { RxCross1 } from "react-icons/rx";
 import Footer from "./Footer";
 import ConversationHistory from "../components/ConversationHistory.jsx";
+import { Mic, MicOff } from "lucide-react";
 
 const Home = () => {
   const {
@@ -27,6 +28,8 @@ const Home = () => {
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
   const [ham, setHam] = useState(false);
+  const [micMuted, setMicMuted] = useState(true);
+  // const [micActivated, setMicActivated] = useState(true); // ✅ yahi missing tha
 
   // ✅ Context wali history hi use karenge
   const history = conversationHistory || [];
@@ -55,10 +58,33 @@ const Home = () => {
       navigate("/signin");
     }
   };
+  const handleMicMuteToggle = () => {
+    setMicMuted((prev) => {
+      const newState = !prev;
+
+      if (newState) {
+        // ✅ Mic muted → recognition stop
+        recognitionRef.current?.stop();
+        console.log("🎤 Mic muted → recognition stopped");
+      } else {
+        // ✅ Mic unmuted → recognition start
+        try {
+          recognitionRef.current?.start();
+          console.log("🎤 Mic unmuted → recognition started");
+        } catch (e) {
+          console.error("Restart failed:", e);
+        }
+      }
+
+      return newState;
+    });
+  };
 
   // ---------- Helpers ----------
   const startRecognition = () => {
     if (!recognitionRef.current) return;
+    if (micMuted) return; // ✅ agar mute hai → kuch mat karo
+
     if (!isSpeakingRef.current && !isRecognizingRef.current) {
       try {
         recognitionRef.current.start();
@@ -382,7 +408,7 @@ const Home = () => {
       );
     }, 800);
 
-    setTimeout(() => startRecognition(), 1600);
+    setTimeout(() => startRecognition(), 200);
 
     return () => {
       mounted = false;
@@ -509,6 +535,15 @@ const Home = () => {
           >
             {isActiveRef.current ? "Active" : "Say name to activate"}
           </span>
+          <span
+            className={`px-3 py-1 rounded-full text-xs ${
+              isSpeakingRef.current
+                ? "bg-yellow-600/40 text-yellow-200"
+                : "bg-gray-600/40 text-gray-200"
+            }`}
+          >
+            {isSpeakingRef.current ? "Speaking…" : "Silent"}
+          </span>
         </div>
 
         {/* Avatars */}
@@ -519,10 +554,24 @@ const Home = () => {
           <img src={aiImg} alt="" className="w-[140px] mix-blend-lighten" />
         )}
 
+        {/* 🎤 Mic Button Center */}
+        <div className="mt-4">
+          <button
+            onClick={handleMicMuteToggle}
+            className={`w-14 h-14 flex items-center justify-center rounded-full shadow-lg transition-colors 
+${micMuted ? "bg-red-600" : "bg-green-600"} text-white`}
+            title={micMuted ? "Mic is muted" : "Mic is active"}
+          >
+            {micMuted ? <MicOff size={28} /> : <Mic size={28} />}
+          </button>
+        </div>
+
         {/* Bubble text */}
-        <h1 className="text-white text-[18px] font-semibold text-center px-4">
-          {userText ? userText : aiText ? aiText : null}
-        </h1>
+        {(userText || aiText) && (
+          <div className="max-w-[600px] bg-[#22225a] text-white px-4 py-2 rounded-2xl shadow-md text-center mt-2">
+            {userText || aiText}
+          </div>
+        )}
 
         {/* Desktop history with scrollbar */}
         <div className="hidden lg:block w-full max-w-[850px] mt-4 p-4 bg-[#111133]/80 backdrop-blur-md rounded-xl overflow-y-auto max-h-[300px] scrollbar-glass">
@@ -534,7 +583,7 @@ const Home = () => {
 
         {/* Popup blocked bar */}
         {pendingOpen && (
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white text-black rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50">
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white text-black rounded-full shadow-lg px-4 py-2 flex items-center gap-3 z-50 transition-all duration-300 animate-bounce">
             <span className="text-sm">
               Pop-up blocked. Click to open:&nbsp;
               <span className="font-semibold">{pendingOpen.label}</span>
