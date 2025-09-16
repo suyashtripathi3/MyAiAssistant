@@ -27,6 +27,7 @@ const Home = () => {
   const [userText, setUserText] = useState("");
   const [aiText, setAiText] = useState("");
   const [ham, setHam] = useState(false);
+  const [micActivated, setMicActivated] = useState(false);
 
   // ✅ Context wali history hi use karenge
   const history = conversationHistory || [];
@@ -123,6 +124,35 @@ const Home = () => {
       return false;
     }
     return true;
+  };
+
+  // Button handler for mic activation
+  const handleMicActivate = () => {
+    setMicActivated(true);
+
+    // 👇 Pehli baar speech start karo
+    speak(
+      `Hello ${userData?.name || "User"}, say ${
+        userData?.assistantName || "Jarvis"
+      } to activate me.`
+    );
+
+    // 👇 Mic stream start karo
+    startMicStream();
+
+    // 👇 Recognition start karo
+    setTimeout(() => startRecognition(), 600);
+  };
+
+  // Mic stream function
+  const startMicStream = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("🎤 Mic activated", stream);
+      // Yaha tu Gemini speech recognition ya command parse me use kar sakta hai
+    } catch (err) {
+      console.error("Mic permission denied", err);
+    }
   };
 
   // ---------- Central Command Handler ----------
@@ -531,6 +561,16 @@ const Home = () => {
           </h2>
           <ConversationHistory history={history} variant="desktop" />
         </div>
+
+        {/* Mic Activate Button */}
+        {!micActivated && (
+          <button
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg z-50"
+            onClick={handleMicActivate}
+          >
+            Activate Mic & Assistant
+          </button>
+        )}
 
         {/* Popup blocked bar */}
         {pendingOpen && (
