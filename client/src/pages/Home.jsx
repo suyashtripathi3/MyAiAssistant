@@ -154,6 +154,47 @@ const Home = () => {
       console.error("Mic permission denied", err);
     }
   };
+  const handleMicToggle = async () => {
+    if (!micActivated) {
+      // ✅ Mic activate
+      setMicActivated(true);
+      isActiveRef.current = false; // assistant initially inactive
+
+      // Start speech
+      speak(
+        `Hello ${userData?.name || "User"}, say ${
+          userData?.assistantName || "Jarvis"
+        } to activate me.`
+      );
+
+      // Start mic stream
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        console.log("🎤 Mic activated", stream);
+      } catch (err) {
+        console.error("Mic permission denied", err);
+        setMicActivated(false);
+        return;
+      }
+
+      // Start recognition after speech
+      setTimeout(() => {
+        if (micActivated) startRecognition();
+      }, 600);
+    } else {
+      // ✅ Mic deactivate
+      setMicActivated(false);
+      isActiveRef.current = false; // assistant bhi deactivate
+
+      try {
+        recognitionRef.current?.stop(); // stop recognition
+      } catch {}
+      synth.cancel(); // stop speech
+      console.log("🎤 Mic turned off");
+    }
+  };
 
   // ---------- Central Command Handler ----------
   const handleCommand = (data, originalQueryText) => {
@@ -562,15 +603,28 @@ const Home = () => {
           <ConversationHistory history={history} variant="desktop" />
         </div>
 
-        {/* Mic Activate Button */}
-        {!micActivated && (
+        {/* ---------- Floating Mic Button ---------- */}
+        <div className="fixed bottom-5 right-5 z-50 flex flex-col items-center gap-1">
+          {/* Mic status indicator */}
+          <span
+            className={`w-3 h-3 rounded-full ${
+              micActivated ? "bg-green-500" : "bg-red-500"
+            }`}
+            title={micActivated ? "Mic On" : "Mic Off"}
+          ></span>
+
+          {/* Mic toggle button */}
           <button
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg z-50"
-            onClick={handleMicActivate}
+            className={`w-12 h-12 flex justify-center items-center rounded-full shadow-lg text-xl ${
+              micActivated
+                ? "bg-green-600 text-white"
+                : "bg-gray-700 text-white"
+            }`}
+            onClick={handleMicToggle}
           >
-            Activate Mic & Assistant
+            {micActivated ? "🎤" : "🎙️"}
           </button>
-        )}
+        </div>
 
         {/* Popup blocked bar */}
         {pendingOpen && (
