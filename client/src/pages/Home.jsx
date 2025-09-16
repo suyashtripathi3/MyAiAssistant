@@ -104,7 +104,11 @@ const Home = () => {
     utter.onend = () => {
       isSpeakingRef.current = false;
       setAiText("");
-      setTimeout(() => startRecognition(), 350);
+      // Desktop only auto start recognition
+      if (!/Mobi|Android/i.test(navigator.userAgent)) {
+        setTimeout(() => startRecognition(), 350);
+      }
+      // setTimeout(() => startRecognition(), 350);
     };
 
     synth.speak(utter);
@@ -184,15 +188,16 @@ const Home = () => {
         if (micActivated) startRecognition();
       }, 600);
     } else {
-      // ✅ Mic deactivate
       setMicActivated(false);
-      isActiveRef.current = false; // assistant bhi deactivate
+
+      // ❌ DO NOT touch isActiveRef.current
+      // isActiveRef.current = false; // remove this line
 
       try {
         recognitionRef.current?.stop(); // stop recognition
       } catch {}
-      synth.cancel(); // stop speech
-      console.log("🎤 Mic turned off");
+      synth.cancel(); // stop ongoing speech
+      console.log("🎤 Mic turned off, assistant state unchanged");
     }
   };
 
