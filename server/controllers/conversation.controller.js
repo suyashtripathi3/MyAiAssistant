@@ -1,6 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 
-// saveConversation
+// Save Conversation
 export const saveConversation = async (req, res) => {
   try {
     const { userId, question, answer } = req.body;
@@ -20,33 +20,34 @@ export const saveConversation = async (req, res) => {
 
     res.status(201).json(conversation);
   } catch (error) {
-    console.error(error);
+    console.error("Error saving conversation:", error);
     res.status(500).json({ message: "Error saving conversation" });
   }
 };
 
+// Get Conversation History
 export const getConversationHistory = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const history = await Conversation.findAll({
-      where: { userId },
-      order: [["createdAt", "ASC"]],
-    });
+    // ✅ Mongo query (findAll → find, order → sort)
+    const history = await Conversation.find({ userId }).sort({ createdAt: 1 });
 
     res.status(200).json(history);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching history:", error);
     res.status(500).json({ message: "Error fetching history" });
   }
 };
 
-// historyController.js
-// conversation.controller.js
+// Clear History
 export const clearHistory = async (req, res) => {
-  const { userId } = req.params;
   try {
-    await Conversation.destroy({ where: { userId } });
+    const { userId } = req.params;
+
+    // ✅ MySQL destroy → Mongo deleteMany
+    await Conversation.deleteMany({ userId });
+
     res.json({ success: true, message: "History cleared successfully" });
   } catch (error) {
     console.error("Error clearing history:", error);

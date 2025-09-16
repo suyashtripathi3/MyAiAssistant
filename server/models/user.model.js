@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     assistantImage: {
       type: String,
     },
-    histort: [{ type: String }],
+    // histort: [{ type: String }],
   },
   { timestamps: true }
 );

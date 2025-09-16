@@ -39,6 +39,7 @@ export const updateAssistant = async (req, res) => {
     return res.status(400).json({ message: "update assistant error" });
   }
 };
+// 
 
 export const askToAssistant = async (req, res) => {
   try {
@@ -53,11 +54,8 @@ export const askToAssistant = async (req, res) => {
     const userName = user.name;
     const assistantName = user.assistantName;
 
-    // ✅ Fetch previous conversation from MySQL
-    const history = await Conversation.findAll({
-      where: { userId },
-      order: [["createdAt", "ASC"]],
-    });
+    // ✅ Fetch previous conversation from Mongo
+    const history = await Conversation.find({ userId }).sort({ createdAt: 1 });
 
     const context = history
       .map((h) => `Q: ${h.question}\nA: ${h.answer}`)
@@ -121,7 +119,7 @@ export const askToAssistant = async (req, res) => {
       }
     }
 
-    // ✅ Save conversation
+    // ✅ Save conversation in Mongo
     await Conversation.create({
       userId,
       question: command,
