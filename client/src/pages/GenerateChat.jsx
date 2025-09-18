@@ -16,6 +16,7 @@ function GenerateChat() {
   const [activeChatId, setActiveChatId] = useState(chats[0].id);
 
   const chatEndRef = useRef(null);
+  const serverUrl = "https://myaiassistantbackend.onrender.com"
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +76,8 @@ function GenerateChat() {
     if (editingIndex !== null) {
       try {
         setLoading(true);
-        const res = await axios.post("http://localhost:8080/api/gemini/text", {
+        // const res = await axios.post("http://localhost:8080/api/gemini/text", {
+        const res = await axios.post(`${serverUrl}/api/gemini/text`, {
           prompt: prompt,
         });
         streamAIResponse(res.data.text, editingIndex + 1);
