@@ -151,15 +151,16 @@ const Home = () => {
       isSpeakingRef.current = false;
       setAiText("");
 
+      // Sirf AI bolne ke baad hi recognition resume ho
       if (!micMutedRef.current) {
-        // ✅ ref
-        console.log("🎤 Restarting recognition after AI finished speaking");
+        console.log("🎤 Restarting recognition after AI response");
         startRecognition();
       } else {
         console.log("⏹️ Mic is muted, staying Idle");
         setListening(false);
       }
     };
+
     synth.speak(utter);
   };
 
@@ -246,7 +247,6 @@ const Home = () => {
         })();
         break;
 
-        break;
       case "calculator_open":
         tryOpenOrDefer(
           "https://www.google.com/search?q=calculator",
@@ -299,17 +299,19 @@ const Home = () => {
     };
 
     recognition.onend = () => {
-      isRecognizingRef.current = false;
-      if (!micMutedRef.current && !isSpeakingRef.current) {
-        // ✅ ref
-        console.log("🎤 Recognition ended, restarting automatically");
-        setTimeout(() => startRecognition(), 500);
-      } else {
-        console.log(
-          "⏹️ Recognition ended but mic muted or AI speaking, staying Idle"
-        );
-        setListening(false);
-      }
+      // isRecognizingRef.current = false;
+      // if (!micMutedRef.current && !isSpeakingRef.current) {
+      //   // ✅ ref
+      //   console.log("🎤 Recognition ended, restarting automatically");
+      //   setTimeout(() => startRecognition(), 500);
+      // } else {
+      //   console.log(
+      //     "⏹️ Recognition ended but mic muted or AI speaking, staying Idle"
+      //   );
+      //   setListening(false);
+      // }
+      setListening(false);
+      console.log("⏹️ Recognition ended");
     };
 
     recognition.onerror = (e) => {
@@ -562,14 +564,18 @@ const Home = () => {
         <div className="flex gap-2 mb-1">
           <span
             className={`px-3 py-1 rounded-full text-xs ${
-              micMuted
+              micMuted || isSpeakingRef.current
                 ? "bg-gray-600/40 text-gray-200" // Idle only if mic muted
                 : listening
                 ? "bg-green-600/40 text-green-200" // Listening
                 : "bg-gray-600/40 text-gray-200" // AI speaking → still Idle shown as gray
             }`}
           >
-            {micMuted ? "Idle" : listening ? "Listening…" : "Idle"}
+            {micMuted || isSpeakingRef.current
+              ? "Idle"
+              : listening
+              ? "Listening…"
+              : "Idle"}
           </span>
 
           <span
