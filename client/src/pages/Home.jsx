@@ -540,7 +540,7 @@ const Home = () => {
         </button> */}
         {/* ✅ Clear History button (Desktop) */}
         <button
-          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[200px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
+          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[140px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
           onClick={() => {
             if (window.confirm("Do you really want to clear history?")) {
               clearHistory(userData?._id);
