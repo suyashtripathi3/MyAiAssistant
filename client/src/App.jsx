@@ -39,10 +39,10 @@ const App = () => {
         path="/customize2"
         element={userData ? <Customize2 /> : <Navigate to={"/signup"} />}
       />
-      <Route
+      {/* <Route
         path="/generate"
         element={userData ? <GenerateChat /> : <Navigate to={"/signup"} />}
-      />
+      /> */}
     </Routes>
   );
 };
