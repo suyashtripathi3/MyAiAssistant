@@ -151,7 +151,6 @@ const Home = () => {
       isSpeakingRef.current = false;
       setAiText("");
 
-      // Sirf AI bolne ke baad hi recognition resume ho
       if (!micMutedRef.current) {
         console.log("🎤 Restarting recognition after AI response");
         startRecognition();
@@ -299,19 +298,19 @@ const Home = () => {
     };
 
     recognition.onend = () => {
-      // isRecognizingRef.current = false;
-      // if (!micMutedRef.current && !isSpeakingRef.current) {
-      //   // ✅ ref
-      //   console.log("🎤 Recognition ended, restarting automatically");
-      //   setTimeout(() => startRecognition(), 500);
-      // } else {
-      //   console.log(
-      //     "⏹️ Recognition ended but mic muted or AI speaking, staying Idle"
-      //   );
-      //   setListening(false);
-      // }
+      isRecognizingRef.current = false;
       setListening(false);
       console.log("⏹️ Recognition ended");
+
+      // 🔥 Mobile ke liye safety auto-restart
+      if (!micMutedRef.current && !isSpeakingRef.current) {
+        console.log("📱 Mobile safety restart");
+        setTimeout(() => {
+          if (!isSpeakingRef.current) {
+            startRecognition();
+          }
+        }, 1200); // thoda delay, warna clash ho jata hai
+      }
     };
 
     recognition.onerror = (e) => {
