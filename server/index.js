@@ -8,6 +8,7 @@ import cors from "cors";
 import userRouter from "./routes/user.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
 import weatherRoutes from "./routes/weather.route.js";
+import geminiRoutes from "./routes/gemini.routes.js";
 
 const app = express();
 
@@ -30,6 +31,9 @@ app.use("/api/user", userRouter);
 app.use("/api/conversations", conversationRoutes);
 
 app.use("/api/weather", weatherRoutes);
+
+app.use("/api/gemini", geminiRoutes);
+
 
 connectDB()
   .then(() => {

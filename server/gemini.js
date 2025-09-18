@@ -2,9 +2,12 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
+const API_KEY = process.env.GEMINI_API_KEY;
+
+// -------- Assistant JSON Response --------
 const geminiResponse = async (command, assistantName, userName) => {
   try {
-    const apiUrl = process.env.GEMINI_API_URL;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
     const prompt = `
 You are a highly intelligent, voice-enabled virtual assistant named ${assistantName}, created by ${userName}.
@@ -96,21 +99,53 @@ Output:
 `;
 
     const result = await axios.post(apiUrl, {
-      contents: [
-        {
-          parts: [
-            {
-              text: prompt,
-            },
-          ],
-        },
-      ],
+      contents: [{ parts: [{ text: prompt }] }],
     });
-    // return result.data;
+
     return result.data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.log(error);
   }
 };
+
+// -------- Normal Text Generation --------
+export const geminiTextGeneration = async (prompt) => {
+  try {
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+
+    const result = await axios.post(apiUrl, {
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+
+    return result.data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// -------- Image Generation --------
+// import axios from "axios";
+
+// export const geminiImageGeneration = async (prompt) => {
+//   try {
+//     console.log("🌟 Calling Gemini image API with prompt:", prompt); // ✅ Debug
+//     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/images:generate?key=${process.env.API_KEY}`;
+
+//     const response = await axios.post(apiUrl, {
+//       prompt: prompt,
+//       size: "1024x1024",
+//     });
+
+//     console.log("🌈 Gemini API response data:", response.data); // ✅ Debug: see full API response
+//     const base64Image = response.data.data[0].b64_json;
+//     return `data:image/png;base64,${base64Image}`;
+//   } catch (error) {
+//     console.error(
+//       "❌ Gemini Image Error:",
+//       error.response?.data || error.message
+//     ); // ✅ Debug: full error
+//     throw new Error("Image generation failed");
+//   }
+// };
 
 export default geminiResponse;

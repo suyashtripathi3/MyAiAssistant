@@ -6,6 +6,7 @@ import Customize from "./pages/Customize";
 import { userDataContext } from "./context/UserContext";
 import Home from "./pages/Home";
 import Customize2 from "./pages/Customize2";
+import GenerateChat from "./pages/GenerateChat";
 
 const App = () => {
   const { userData, setUserData } = useContext(userDataContext);
@@ -37,6 +38,10 @@ const App = () => {
       <Route
         path="/customize2"
         element={userData ? <Customize2 /> : <Navigate to={"/signup"} />}
+      />
+      <Route
+        path="/generate"
+        element={userData ? <GenerateChat /> : <Navigate to={"/signup"} />}
       />
     </Routes>
   );

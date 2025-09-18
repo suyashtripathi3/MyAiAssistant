@@ -43,7 +43,6 @@ const Home = () => {
   const isRecognizingRef = useRef(false);
   const isActiveRef = useRef(false);
   const micMutedRef = useRef(true); // track mic status reliably
-  
 
   const synth = window.speechSynthesis;
 
@@ -486,6 +485,12 @@ const Home = () => {
               >
                 Customize Assistant
               </button>
+              <button
+                className="min-w-[180px] h-[48px] font-semibold bg-white rounded-full text-black text-[16px] px-5 cursor-pointer"
+                onClick={() => navigate("/generate")}
+              >
+                Text/Image
+              </button>
               {/* ✅ Clear History button (Mobile menu) */}
               <button
                 className="min-w-[160px] h-[48px] font-semibold bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
@@ -527,9 +532,15 @@ const Home = () => {
         >
           Customize Assistant
         </button>
+        <button
+          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[140px] right-[20px] bg-white rounded-full text-black text-[16px] px-5 cursor-pointer"
+          onClick={() => navigate("/generate")}
+        >
+          Text/Image
+        </button>
         {/* ✅ Clear History button (Desktop) */}
         <button
-          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[140px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
+          className="min-w-[180px] h-[48px] font-semibold hidden lg:block absolute top-[200px] right-[20px] bg-red-500 rounded-full text-white text-[16px] px-5 cursor-pointer"
           onClick={() => {
             if (window.confirm("Do you really want to clear history?")) {
               clearHistory(userData?._id);
