@@ -109,19 +109,19 @@ Output:
 };
 
 // -------- Normal Text Generation --------
-export const geminiTextGeneration = async (prompt) => {
-  try {
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
+// export const geminiTextGeneration = async (prompt) => {
+//   try {
+//     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
 
-    const result = await axios.post(apiUrl, {
-      contents: [{ parts: [{ text: prompt }] }],
-    });
+//     const result = await axios.post(apiUrl, {
+//       contents: [{ parts: [{ text: prompt }] }],
+//     });
 
-    return result.data.candidates[0].content.parts[0].text;
-  } catch (error) {
-    console.log(error);
-  }
-};
+//     return result.data.candidates[0].content.parts[0].text;
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
 
 // -------- Image Generation --------
 // import axios from "axios";
