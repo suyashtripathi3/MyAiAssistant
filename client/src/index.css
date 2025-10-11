@@ -1,7 +1,5 @@
 @import "tailwindcss";
-
-
-@import "tailwindcss";
+@plugin "daisyui";
 
 @layer utilities {
   /* Neon Glass Scrollbar (Global + Boxes) */

@@ -38,7 +38,7 @@ const App = () => {
       <Route
         path="/customize2"
         element={userData ? <Customize2 /> : <Navigate to={"/signup"} />}
-      />
+      />  
       <Route path="/*" element={<NotFound />} />
     </Routes>
   );
