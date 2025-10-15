@@ -1,9 +1,6 @@
-import genToken from "../config/token.js";
-import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-
-// Detect environment
-const isProd = process.env.NODE_ENV === "production";
+import User from "../models/user.model.js";
+import genToken from "../config/token.js";
 
 // ==================== SIGNUP ====================
 export const signup = async (req, res) => {
@@ -12,41 +9,23 @@ export const signup = async (req, res) => {
 
     // Check if email already exists
     const existEmail = await User.findOne({ email });
-    if (existEmail) {
+    if (existEmail)
       return res.status(400).json({ message: "Email already exists" });
-    }
 
     // Validate password length
-    if (password.length < 6) {
+    if (password.length < 6)
       return res
         .status(400)
         .json({ message: "Password must be at least 6 characters" });
-    }
 
-    // Debug: measure hash time
-    console.time("hashPassword");
+    // Hash password
     const hashPassword = await bcrypt.hash(password, 10);
-    console.timeEnd("hashPassword");
 
-    // Debug: measure DB create time
-    console.time("createUser");
-    const user = await User.create({
-      name,
-      email,
-      password: hashPassword,
-    });
-    console.timeEnd("createUser");
+    // Create user
+    const user = await User.create({ name, email, password: hashPassword });
 
-    // Generate JWT token
-    const token = await genToken(user._id);
-
-    // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
-    });
+    // Generate token & set cookie
+    genToken(user._id, res);
 
     return res.status(201).json({ message: "User created successfully", user });
   } catch (error) {
@@ -62,29 +41,15 @@ export const signin = async (req, res) => {
 
     // Find user
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "Email doesn't exist" });
-    }
+    if (!user) return res.status(400).json({ message: "Email doesn't exist" });
 
-    // Check password
-    console.time("comparePassword");
+    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    console.timeEnd("comparePassword");
-
-    if (!isMatch) {
+    if (!isMatch)
       return res.status(400).json({ message: "Incorrect password" });
-    }
 
-    // Generate token
-    const token = await genToken(user._id);
-
-    // Set cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
-    });
+    // Generate token & set cookie
+    genToken(user._id, res);
 
     return res.status(200).json({ message: "Login successful", user });
   } catch (error) {
@@ -96,11 +61,13 @@ export const signin = async (req, res) => {
 // ==================== LOGOUT ====================
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("token", {
+    // Clear JWT cookie
+    res.clearCookie("jwt", {
       httpOnly: true,
-      sameSite: isProd ? "none" : "lax",
-      secure: isProd,
+      sameSite: process.env.NODE_ENV === "development" ? "strict" : "none",
+      secure: process.env.NODE_ENV === "development" ? false : true,
     });
+
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
