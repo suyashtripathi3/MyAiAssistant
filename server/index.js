@@ -37,6 +37,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// For loader
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
 // ================= Routes =================
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
