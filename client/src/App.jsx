@@ -18,7 +18,7 @@ const App = () => {
     const checkBackend = async () => {
       try {
         const res = await axios.get(
-          "https://your-backend-url.onrender.com/health"
+          "https://myaiassistantbackend.onrender.com/health"
         );
         if (res.status === 200) {
           setIsBackendReady(true);
