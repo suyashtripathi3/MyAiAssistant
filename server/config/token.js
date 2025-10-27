@@ -3,12 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config(); // load environment variables from .env
 
-/**
- * Generate JWT token and set it as a cookie in response
- * @param {string} userId - User ID to encode in token
- * @param {object} res - Express response object
- * @returns {string} JWT token
- */
 const genToken = (userId, res) => {
   const { JWT_SECRET, NODE_ENV } = process.env;
 
@@ -20,11 +14,12 @@ const genToken = (userId, res) => {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "7d" });
 
   // Set cookie
-  res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    httpOnly: true, // prevent XSS
-    sameSite: NODE_ENV === "development" ? "strict" : "none",
-    secure: NODE_ENV === "development" ? false : true, // secure cookies in production
+  // genToken.js
+  res.cookie("token", token, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "development" ? "lax" : "none",
+    secure: process.env.NODE_ENV === "development" ? false : true,
   });
 
   return token;

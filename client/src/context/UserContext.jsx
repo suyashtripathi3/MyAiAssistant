@@ -33,14 +33,20 @@ const UserContext = ({ children }) => {
       const res = await axios.get(`${serverUrl}/api/user/current`, {
         withCredentials: true,
       });
-
       setUserData(res.data);
 
       if (res.data?._id) {
         await fetchConversationHistory(res.data._id);
       }
     } catch (error) {
-      console.error("Error fetching current user:", error);
+      if (
+        error.response?.status === 400 ||
+        error.response?.data?.message === "token not found"
+      ) {
+        console.log("No user logged in yet — skipping fetch.");
+      } else {
+        console.error("Error fetching current user:", error);
+      }
     }
   };
 
