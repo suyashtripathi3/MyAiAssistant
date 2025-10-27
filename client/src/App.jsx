@@ -27,7 +27,7 @@ const App = () => {
         console.log("Backend cold start... retrying in 2s");
         setTimeout(checkBackend, 2000);
       }
-    };v
+    };
     checkBackend();
   }, []);
 
