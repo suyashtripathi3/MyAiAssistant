@@ -14,26 +14,26 @@ const App = () => {
   const { userData } = useContext(userDataContext);
   const [isBackendReady, setIsBackendReady] = useState(false);
 
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const res = await axios.get(
-          "https://myaiassistantbackend.onrender.com/health"
-        );
-        if (res.status === 200) {
-          setIsBackendReady(true);
-        }
-      } catch (err) {
-        console.log("Backend cold start... retrying in 2s");
-        setTimeout(checkBackend, 2000);
-      }
-    };
-    checkBackend();
-  }, []);
+  // useEffect(() => {
+  //   const checkBackend = async () => {
+  //     try {
+  //       const res = await axios.get(
+  //         "https://myaiassistantbackend.onrender.com/health"
+  //       );
+  //       if (res.status === 200) {
+  //         setIsBackendReady(true);
+  //       }
+  //     } catch (err) {
+  //       console.log("Backend cold start... retrying in 2s");
+  //       setTimeout(checkBackend, 2000);
+  //     }
+  //   };
+  //   checkBackend();
+  // }, []);
 
-  if (!isBackendReady) {
-    return <Loader />;
-  }
+  // if (!isBackendReady) {
+  //   return <Loader />;
+  // }
 
   return (
     <Routes>
