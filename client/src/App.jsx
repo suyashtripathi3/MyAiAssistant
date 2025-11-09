@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import axios from "axios";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
@@ -10,12 +10,19 @@ import NotFound from "./pages/NotFound";
 import Loader from "./components/Loader";
 import { userDataContext } from "./context/UserContext";
 
+// ✅ Protected Route wrapper
+const ProtectedRoute = ({ userData, children }) => {
+  if (!userData) {
+    return <Navigate to="/signin" replace />;
+  }
+  return children;
+};
+
 const App = () => {
   const { userData } = useContext(userDataContext);
   const [isBackendReady, setIsBackendReady] = useState(false);
-  const [fromSignup, setFromSignup] = useState(false);
-  const location = useLocation();
 
+  // --- Check if backend (Render) is ready
   useEffect(() => {
     const checkBackend = async () => {
       try {
@@ -30,15 +37,9 @@ const App = () => {
         setTimeout(checkBackend, 2000);
       }
     };
+
     checkBackend();
   }, []);
-
-  useEffect(() => {
-    // If user navigated from signup, remember it
-    if (location.state?.fromSignup) {
-      setFromSignup(true);
-    }
-  }, [location]);
 
   if (!isBackendReady) {
     return <Loader />;
@@ -46,53 +47,43 @@ const App = () => {
 
   return (
     <Routes>
-      {/* Home Route */}
-      <Route
-        path="/"
-        element={userData ? <Home /> : <Navigate to="/signin" />}
-      />
-
-      {/* Signup Route */}
+      {/* Public Routes */}
       <Route
         path="/signup"
-        element={
-          !userData ? (
-            <SignUp />
-          ) : (
-            <Navigate to="/customize" state={{ fromSignup: true }} />
-          )
-        }
+        element={!userData ? <SignUp /> : <Navigate to="/" replace />}
       />
-
-      {/* Signin Route */}
       <Route
         path="/signin"
-        element={!userData ? <SignIn /> : <Navigate to="/" />}
+        element={!userData ? <SignIn /> : <Navigate to="/" replace />}
       />
 
-      {/* Customize Route */}
+      {/* Protected Routes */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute userData={userData}>
+            <Home />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/customize"
         element={
-          userData ? (
-            fromSignup ? (
-              <Customize />
-            ) : (
-              <Navigate to="/" />
-            )
-          ) : (
-            <Navigate to="/signup" />
-          )
+          <ProtectedRoute userData={userData}>
+            <Customize />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/customize2"
+        element={
+          <ProtectedRoute userData={userData}>
+            <Customize2 />
+          </ProtectedRoute>
         }
       />
 
-      {/* Customize2 Route */}
-      <Route
-        path="/customize2"
-        element={userData ? <Customize2 /> : <Navigate to="/signup" />}
-      />
-
-      {/* Not Found */}
+      {/* 404 */}
       <Route path="/*" element={<NotFound />} />
     </Routes>
   );
