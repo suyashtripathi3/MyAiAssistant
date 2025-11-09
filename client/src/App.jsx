@@ -13,6 +13,7 @@ import { userDataContext } from "./context/UserContext";
 const App = () => {
   const { userData } = useContext(userDataContext);
   const [isBackendReady, setIsBackendReady] = useState(false);
+  const [fromSignup, setFromSignup] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -32,12 +33,16 @@ const App = () => {
     checkBackend();
   }, []);
 
+  useEffect(() => {
+    // If user navigated from signup, remember it
+    if (location.state?.fromSignup) {
+      setFromSignup(true);
+    }
+  }, [location]);
+
   if (!isBackendReady) {
     return <Loader />;
   }
-
-  // ✅ Determine if user came from signup or signin
-  const fromSignup = location.state?.fromSignup;
 
   return (
     <Routes>
